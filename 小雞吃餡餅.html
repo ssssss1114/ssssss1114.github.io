@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小雞吃餡餅</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: #87CEEB; /* 天空藍背景 */
+      font-family: Arial, sans-serif;
+    }
+
+    canvas {
+      display: block;
+      margin: 0 auto;
+    }
+
+    .game-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .game-left {
+      margin-right: 20px;
+    }
+
+    .game-right {
+      width: 250px;
+      background-color: #f0f0f0;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .game-right h2 {
+      text-align: center;
+      color: #333;
+    }
+
+    .game-over {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 40px;
+      color: white;
+      font-weight: bold;
+      display: none;
+    }
+
+    .game-right p {
+      font-size: 16px;
+      line-height: 1.5;
+      color: #555;
+    }
+
+    .game-right ul {
+      padding-left: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <div class="game-left">
+      <canvas id="gameCanvas"></canvas>
+      <div class="game-over" id="game-over">遊戲結束！</div>
+    </div>
+    <div class="game-right">
+      <h2>遊戲說明</h2>
+      <p>在這款遊戲中，你將控制小雞接住從天而降的餡餅，並增加你的分數！</p>
+      <h3>遊戲規則：</h3>
+      <ul>
+        <li>使用左右箭頭控制小雞移動。</li>
+        <li>接住餡餅來增加分數。</li>
+        <li>不要讓餡餅掉到地面。</li>
+      </ul>
+      <h3>如何開始：</h3>
+      <p>按下左右箭頭鍵來移動小雞，開始遊戲並享受收集餡餅的樂趣！</p>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    canvas.width = 800;
+    canvas.height = 600;
+
+    let chicken = {
+      x: canvas.width / 2,
+      y: canvas.height - 60,
+      width: 50,
+      height: 50,
+      speed: 5
+    };
+
+    let pies = [];
+    let score = 0;
+    let gameOver = false;
+
+    // 繪製小雞 (卡通風格)
+    function drawChicken() {
+      // 小雞的身體
+      ctx.fillStyle = "#FFEB3B"; // 小雞的顏色
+      ctx.beginPath();
+      ctx.arc(chicken.x, chicken.y, chicken.width, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 小雞的眼睛
+      ctx.fillStyle = "#FFFFFF"; // 眼睛顏色
+      ctx.beginPath();
+      ctx.arc(chicken.x - 15, chicken.y - 10, 8, 0, Math.PI * 2); // 左眼
+      ctx.arc(chicken.x + 15, chicken.y - 10, 8, 0, Math.PI * 2); // 右眼
+      ctx.fill();
+
+      // 小雞的嘴巴
+      ctx.fillStyle = "#FF5722"; // 嘴巴顏色
+      ctx.beginPath();
+      ctx.moveTo(chicken.x - 10, chicken.y + 10);
+      ctx.lineTo(chicken.x + 10, chicken.y + 10);
+      ctx.lineTo(chicken.x, chicken.y + 20);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // 繪製餡餅
+    function drawPie(pie) {
+      ctx.fillStyle = "#FFD700"; // 餡餅顏色
+      ctx.beginPath();
+      ctx.arc(pie.x, pie.y, 20, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 更新小雞的位置
+    function updateChicken() {
+      if (keys["ArrowLeft"] && chicken.x - chicken.width > 0) {
+        chicken.x -= chicken.speed;
+      }
+      if (keys["ArrowRight"] && chicken.x + chicken.width < canvas.width) {
+        chicken.x += chicken.speed;
+      }
+    }
+
+    // 生成餡餅
+    function generatePie() {
+      if (Math.random() < 0.02) {
+        let pieX = Math.random() * canvas.width;
+        pies.push({ x: pieX, y: -20 });
+      }
+    }
+
+    // 更新餡餅位置
+    function updatePies() {
+      pies.forEach((pie, index) => {
+        pie.y += 3;
+        if (pie.y > canvas.height) {
+          pies.splice(index, 1);
+        }
+        if (checkCollision(pie, chicken)) {
+          score++;
+          pies.splice(index, 1);
+        }
+        drawPie(pie);
+      });
+    }
+
+    // 碰撞檢測
+    function checkCollision(pie, chicken) {
+      return pie.x > chicken.x - chicken.width &&
+             pie.x < chicken.x + chicken.width &&
+             pie.y > chicken.y - chicken.height &&
+             pie.y < chicken.y + chicken.height;
+    }
+
+    // 顯示分數
+    function displayScore() {
+      ctx.fillStyle = "white";
+      ctx.font = "30px Arial";
+      ctx.fillText("分數: " + score, 10, 30);
+    }
+
+    // 顯示遊戲結束訊息
+    function showGameOver() {
+      document.getElementById("game-over").style.display = "block";
+    }
+
+    // 處理玩家輸入
+    let keys = {};
+    document.addEventListener("keydown", function(event) {
+      keys[event.key] = true;
+    });
+    document.addEventListener("keyup", function(event) {
+      keys[event.key] = false;
+    });
+
+    // 遊戲主循環
+    function gameLoop() {
+      if (gameOver) {
+        showGameOver();
+        return;
+      }
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      generatePie();
+      updateChicken();
+      updatePies();
+
+      drawChicken();
+      displayScore();
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    gameLoop();
+  </script>
+</body>
+</html>

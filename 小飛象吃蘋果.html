@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小飛象吃蘋果</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: #87CEEB; /* 天空藍背景 */
+      font-family: Arial, sans-serif;
+    }
+
+    canvas {
+      display: block;
+      margin: 0 auto;
+    }
+
+    .game-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .game-left {
+      margin-right: 20px;
+    }
+
+    .game-right {
+      width: 250px;
+      background-color: #f0f0f0;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .game-right h2 {
+      text-align: center;
+      color: #333;
+    }
+
+    .game-over {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 40px;
+      color: white;
+      font-weight: bold;
+      display: none;
+    }
+
+    .game-right p {
+      font-size: 16px;
+      line-height: 1.5;
+      color: #555;
+    }
+
+    .game-right ul {
+      padding-left: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <div class="game-left">
+      <canvas id="gameCanvas"></canvas>
+      <div class="game-over" id="game-over">遊戲結束！</div>
+    </div>
+    <div class="game-right">
+      <h2>遊戲說明</h2>
+      <p>在這款遊戲中，你將扮演小飛象，控制牠躲避空中的障礙物並吃到蘋果來增加分數！</p>
+      <h3>遊戲規則：</h3>
+      <ul>
+        <li>使用上箭頭控制小飛象上升。</li>
+        <li>躲避空中的鳥類障礙。</li>
+        <li>吃掉蘋果來獲得分數。</li>
+        <li>遊戲結束時，顯示分數。</li>
+      </ul>
+      <h3>如何開始：</h3>
+      <p>按下上箭頭鍵來開始控制小飛象，開始遊戲並享受飛行的樂趣！</p>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    canvas.width = 800;
+    canvas.height = 600;
+
+    let elephant = {
+      x: 100,
+      y: canvas.height / 2,
+      width: 80,
+      height: 70,
+      speed: 4,
+      wingsWidth: 40,  // 更小的翅膀寬度
+      wingsHeight: 20,  // 更小的翅膀高度
+      dy: 0
+    };
+
+    let apples = [];
+    let birds = [];
+    let score = 0;
+    let gameOver = false;
+
+    const gravity = 0.5;
+    const wingFlap = -10;
+
+    // 繪製小飛象 (大象身體 + 小翅膀)
+    function drawElephant() {
+      // 大象身體
+      ctx.fillStyle = "#808080"; // 大象顏色
+      ctx.beginPath();
+      ctx.ellipse(elephant.x, elephant.y, elephant.width, elephant.height, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 大象耳朵
+      ctx.fillStyle = "#A9A9A9"; // 耳朵顏色
+      ctx.beginPath();
+      ctx.ellipse(elephant.x - 40, elephant.y - 10, 50, 40, Math.PI, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(elephant.x + 40, elephant.y - 10, 50, 40, 0, 0, Math.PI);
+      ctx.fill();
+
+      // 大象鼻子
+      ctx.fillStyle = "#808080";
+      ctx.beginPath();
+      ctx.moveTo(elephant.x - 10, elephant.y + 10);
+      ctx.lineTo(elephant.x + 10, elephant.y + 10);
+      ctx.lineTo(elephant.x + 5, elephant.y + 40);
+      ctx.lineTo(elephant.x - 5, elephant.y + 40);
+      ctx.closePath();
+      ctx.fill();
+
+      // 小翅膀
+      ctx.fillStyle = "#FFFFFF"; // 白色翅膀
+      ctx.beginPath();
+      ctx.ellipse(elephant.x - 30, elephant.y - 30, elephant.wingsWidth, elephant.wingsHeight, Math.PI / 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(elephant.x + 30, elephant.y - 30, elephant.wingsWidth, elephant.wingsHeight, -Math.PI / 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 繪製蘋果 (擬真風格)
+    function drawApple(apple) {
+      ctx.fillStyle = "#FF4500"; // 蘋果顏色
+      ctx.beginPath();
+      ctx.arc(apple.x, apple.y, 15, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 蘋果的葉子
+      ctx.fillStyle = "#228B22"; // 蘋果葉子顏色
+      ctx.beginPath();
+      ctx.moveTo(apple.x, apple.y - 15);
+      ctx.lineTo(apple.x - 5, apple.y - 25);
+      ctx.lineTo(apple.x + 5, apple.y - 25);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // 繪製卡通鳥 (鳥的外形)
+    function drawBird(bird) {
+      ctx.fillStyle = "#FFFF00"; // 鳥的顏色
+      ctx.beginPath();
+      ctx.arc(bird.x, bird.y, 20, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 鳥的翅膀
+      ctx.fillStyle = "#FFD700"; // 鳥的翅膀顏色
+      ctx.beginPath();
+      ctx.ellipse(bird.x - 15, bird.y - 10, 10, 6, Math.PI / 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(bird.x + 15, bird.y - 10, 10, 6, -Math.PI / 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 鳥的嘴巴
+      ctx.fillStyle = "#FF6347"; // 鳥的嘴巴顏色
+      ctx.beginPath();
+      ctx.moveTo(bird.x, bird.y + 15);
+      ctx.lineTo(bird.x + 10, bird.y + 20);
+      ctx.lineTo(bird.x - 10, bird.y + 20);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // 更新小飛象的位置
+    function updateElephant() {
+      elephant.y += elephant.dy;
+      if (elephant.y + elephant.height / 2 > canvas.height) {
+        elephant.y = canvas.height - elephant.height / 2;
+      }
+      if (elephant.y - elephant.height / 2 < 0) {
+        elephant.y = elephant.height / 2;
+      }
+      elephant.dy += gravity;
+    }
+
+    // 隨機產生蘋果
+    function generateApple() {
+      if (Math.random() < 0.01) {
+        let appleX = canvas.width + 50;
+        let appleY = Math.random() * canvas.height;
+        apples.push({ x: appleX, y: appleY });
+      }
+    }
+
+    // 隨機產生鳥類障礙物
+    function generateBird() {
+      if (Math.random() < 0.02) {
+        let birdX = canvas.width + 30;
+        let birdY = Math.random() * canvas.height;
+        birds.push({ x: birdX, y: birdY });
+      }
+    }
+
+    // 更新蘋果位置
+    function updateApples() {
+      apples.forEach((apple, index) => {
+        apple.x -= 3;
+        if (apple.x + 15 < 0) {
+          apples.splice(index, 1);
+        }
+        if (checkCollision(apple, elephant)) {
+          score++;
+          apples.splice(index, 1);
+        }
+        drawApple(apple);
+      });
+    }
+
+    // 更新鳥類障礙物位置
+    function updateBirds() {
+      birds.forEach((bird, index) => {
+        bird.x -= 5;
+        if (bird.x + 20 < 0) {
+          birds.splice(index, 1);
+        }
+        if (checkCollision(bird, elephant)) {
+          gameOver = true;
+        }
+        drawBird(bird);
+      });
+    }
+
+    // 碰撞檢測
+    function checkCollision(obj1, obj2) {
+      return obj1.x < obj2.x + obj2.width &&
+             obj1.x + 15 > obj2.x &&
+             obj1.y < obj2.y + obj2.height &&
+             obj1.y + 15 > obj2.y;
+    }
+
+    // 顯示分數
+    function displayScore() {
+      ctx.fillStyle = "white";
+      ctx.font = "30px Arial";
+      ctx.fillText("分數: " + score, 10, 30);
+    }
+
+    // 顯示遊戲結束訊息
+    function showGameOver() {
+      document.getElementById("game-over").style.display = "block";
+    }
+
+    // 處理玩家輸入
+    document.addEventListener("keydown", function(event) {
+      if (event.key === "ArrowUp") {
+        elephant.dy = wingFlap;
+      }
+    });
+
+    // 遊戲主循環
+    function gameLoop() {
+      if (gameOver) {
+        showGameOver();
+        return;
+      }
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      generateApple();
+      generateBird();
+
+      updateElephant();
+      updateApples();
+      updateBirds();
+
+      drawElephant();
+      displayScore();
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    gameLoop();
+  </script>
+</body>
+</html>
