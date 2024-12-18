@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>運動App</title>
+    <style>
+        /* 通用樣式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+        }
+
+        nav ul {
+            list-style: none;
+            padding: 10px 0;
+        }
+
+        nav ul li {
+            display: inline;
+            margin: 0 15px;
+        }
+
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-size: 1.1rem;
+        }
+
+        .hero {
+            background-color: #2196F3;
+            color: white;
+            padding: 50px 0;
+            text-align: center;
+        }
+
+        .hero h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        .hero .btn {
+            background-color: #FF9800;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .hero .btn:active {
+            background-color: #FF5722;
+        }
+
+        .status-message {
+            font-size: 1.2rem;
+            margin-top: 20px;
+            color: #fff;
+        }
+
+        .features {
+            padding: 20px;
+            text-align: center;
+        }
+
+        .features h2 {
+            font-size: 1.8rem;
+            margin-bottom: 30px;
+        }
+
+        .feature-item {
+            display: inline-block;
+            width: 30%;
+            padding: 20px;
+            background-color: white;
+            margin: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+
+        .feature-item h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        footer {
+            text-align: center;
+            background-color: #333;
+            color: white;
+            padding: 15px 0;
+            margin-top: 50px;
+        }
+
+        footer p {
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>運動App</h1>
+        <nav>
+            <ul>
+                <li><a href="#">首頁</a></li>
+                <li><a href="#">運動項目</a></li>
+                <li><a href="#">我的歷程</a></li>
+                <li><a href="#">設置</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <h2>歡迎回來！開始今天的運動吧！</h2>
+        <button id="startBtn" class="btn">開始運動</button>
+        <p id="statusMessage" class="status-message"></p>
+    </section>
+
+    <section class="features">
+        <h2>功能區</h2>
+        <div class="feature-item">
+            <h3>運動追蹤</h3>
+            <p>記錄每一次的運動數據，並且查看歷史成績。</p>
+        </div>
+        <div class="feature-item">
+            <h3>健康分析</h3>
+            <p>分析你的健康數據，幫助你了解進步與需要改進的地方。</p>
+        </div>
+        <div class="feature-item">
+            <h3>社群互動</h3>
+            <p>與朋友們一起挑戰，分享你的運動成果。</p>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2024 運動App | 隱私政策 | 使用條款</p>
+    </footer>
+
+    <script>
+        // 獲取按鈕和狀態訊息區域
+        const startBtn = document.getElementById('startBtn');
+        const statusMessage = document.getElementById('statusMessage');
+
+        // 設定運動狀態
+        let isRunning = false;
+
+        // 按鈕點擊事件
+        startBtn.addEventListener('click', () => {
+            if (isRunning) {
+                // 如果已經在運動中，顯示停止運動的訊息
+                statusMessage.textContent = "運動已停止。";
+                startBtn.textContent = "開始運動";
+                startBtn.style.backgroundColor = "#FF9800"; // 還原按鈕顏色
+            } else {
+                // 如果還沒有開始運動，顯示開始運動的訊息
+                statusMessage.textContent = "運動開始！保持健康！";
+                startBtn.textContent = "停止運動";
+                startBtn.style.backgroundColor = "#FF5722"; // 改變按鈕顏色
+            }
+
+            // 切換運動狀態
+            isRunning = !isRunning;
+        });
+    </script>
+</body>
+</html>
